@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"github.com/pborman/uuid"
 	"reflect"
+	"strings"
 )
 
 type Location struct {
