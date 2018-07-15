@@ -4,6 +4,7 @@ import { Tabs, Spin } from 'antd';
 import { GEO_OPTIONS, POS_KEY, AUTH_PREFIX, TOKEN_KEY, API_ROOT } from '../constants';
 import { Gallery } from './Gallery';
 import { CreatePostButton } from './CreatePostButton';
+import { WrappedAroundMap } from "./AroundMap";
 
 const TabPane = Tabs.TabPane;
 
@@ -44,18 +45,19 @@ export class Home extends React.Component {
 		this.setState({ loadingGeoLocation: false, error: 'Failed to load geo location!' });
 	}
 
-	loadNearbyPosts = () => {
-	    const { lat, lon } = JSON.parse(localStorage.getItem(POS_KEY));
+	loadNearbyPosts = (location, range) => {
+	    const { lat, lon } = location ? location : JSON.parse(localStorage.getItem(POS_KEY));
+		const radius = range ? range : 20;
 	    this.setState({ loadingPost: true, error: '' });
 	    $.ajax({
-            url: `${API_ROOT}/search?lat=${lat}&lon=${lon}&range=20`,
+            url: `${API_ROOT}/search?lat=${lat}&lon=${lon}&range=${radius}`,
             method: 'GET',
-            header: {
+            headers: {
                 Authorization: `${AUTH_PREFIX} ${localStorage.getItem(TOKEN_KEY)}`,
             },
         }).then((response) => {
             console.log(response);
-			this.setState({ posts: response, loadingPost: false, error: '' });
+			this.setState({ posts: response || [], loadingPost: false, error: '' });
         }, (error) => {
 			this.setState({ loadingPost: false, error: error.responseText });
         }).catch((err) => {
@@ -94,7 +96,16 @@ export class Home extends React.Component {
 				<TabPane tab="Posts" key="1">
                     {this.getGalleryPanelContent()}
                 </TabPane>
-				<TabPane tab="Map" key="2">Content of tab 2</TabPane>
+				<TabPane tab="Map" key="2">
+					<WrappedAroundMap
+						googleMapURL="https://maps.googleapis.com/maps/api/js?key=AIzaSyC4R6AN7SmujjPUIGKdyao2Kqitzr1kiRg&v=3.exp&libraries=geometry,drawing,places"
+						loadingElement={<div style={{ height: `100%` }} />}
+						containerElement={<div style={{ height: `400px` }} />}
+						mapElement={<div style={{ height: `100%` }} />}
+						posts={this.state.posts}
+						loadNearbyPosts={this.loadNearbyPosts}
+					/>
+				</TabPane>
 			</Tabs>
 		);
 	}
